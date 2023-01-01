@@ -1,2 +1,2 @@
 /* pdbs = Plugable Databases */
-SELECT name FROM v$pdbs;
+SELECT name, open_mode FROM v$pdbs;
