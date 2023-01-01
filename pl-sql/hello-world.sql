@@ -1,0 +1,6 @@
+SET SERVEROUTPUT ON
+DECLARE
+    vText VARCHAR(30) := 'Hello World!';
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(vText);
+END;
