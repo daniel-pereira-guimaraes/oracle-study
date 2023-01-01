@@ -1,0 +1,2 @@
+On sqlplus prompt:
+SQL> connect sys/oracle@//localhost:1521/orcl as sysdba
