@@ -1,6 +1,8 @@
-/* 
-ALTER SESSION SET CONTAINER = XEPDB1;
+/* Check database container:
+SELECT name FROM v$pdbs;
 */
+
+ALTER SESSION SET CONTAINER = ORCL;
 
 DROP USER HR CASCADE;
 
