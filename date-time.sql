@@ -1,0 +1,8 @@
+SELECT
+    SYSDATE,
+    CURRENT_DATE,
+    CURRENT_TIMESTAMP,
+    LOCALTIMESTAMP,
+    SYSTIMESTAMP,
+    TO_DATE('25-12-2022', 'dd-MM-yyyy') christmas
+FROM dual;
