@@ -1,4 +1,5 @@
 SET SERVEROUTPUT ON
+SET VERIFY OFF
 
 ACCEPT vEmployeeId NUMBER PROMPT 'Enter employee ID:';
 
