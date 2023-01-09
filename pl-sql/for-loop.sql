@@ -1,0 +1,11 @@
+SET SERVEROUTPUT ON
+
+DECLARE
+    i NUMBER;
+BEGIN
+    i := 1;
+    FOR i IN 1..10 LOOP 
+        DBMS_OUTPUT.PUT_LINE(i);
+    END LOOP;
+    DBMS_OUTPUT.PUT_LINE('End loop!');
+END;
