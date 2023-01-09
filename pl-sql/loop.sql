@@ -9,4 +9,5 @@ BEGIN
         i := i + 1;
         EXIT WHEN i > 10;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('End loop!');
 END;
