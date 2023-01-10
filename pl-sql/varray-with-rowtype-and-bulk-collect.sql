@@ -1,8 +1,8 @@
 SET SERVEROUTPUT ON
 
 DECLARE
-    TYPE countries_table_type IS VARRAY(100) OF countries%rowtype;
-    countries_table countries_table_type := countries_table_type();
+    TYPE countries_varray IS VARRAY(100) OF countries%rowtype;
+    countries_table countries_varray := countries_varray();
 BEGIN
     SELECT * BULK COLLECT INTO countries_table 
     FROM countries 
