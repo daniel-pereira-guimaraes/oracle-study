@@ -1,0 +1,14 @@
+SET SERVEROUTPUT ON
+
+CREATE OR REPLACE PROCEDURE sp_square(x IN OUT NUMBER) 
+AS
+BEGIN
+    x := x * 2;
+END;
+
+DECLARE
+    v NUMBER := 15;
+BEGIN
+    sp_square(v);
+    DBMS_OUTPUT.PUT_LINE('v: ' || v);
+END;
