@@ -1,0 +1,1 @@
+DROP PROCEDURE sp_legend_value;
