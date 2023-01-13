@@ -1,0 +1,1 @@
+DROP FUNCTION fn_total_salary;
