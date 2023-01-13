@@ -1,0 +1,1 @@
+ALTER PROCEDURE sp_legend_value COMPILE;
