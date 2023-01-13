@@ -3,7 +3,7 @@ SET SERVEROUTPUT ON
 CREATE OR REPLACE PROCEDURE sp_square(x IN OUT NUMBER) 
 AS
 BEGIN
-    x := x * 2;
+    x := x * x;
 END;
 
 DECLARE
