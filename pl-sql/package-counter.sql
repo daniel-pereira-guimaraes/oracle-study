@@ -42,6 +42,10 @@ BEGIN
     g_value := 0;
 END;
 
+-- Re-compile package
+ALTER PACKAGE pkg_counter COMPILE SPECIFICATION;
+ALTER PACKAGE pkg_counter COMPILE BODY;
+
 -- Package test.
 DECLARE 
     v NUMBER;
