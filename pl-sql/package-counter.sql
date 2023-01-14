@@ -58,3 +58,9 @@ BEGIN
     v := pkg_counter.fn_get;
     DBMS_OUTPUT.PUT_LINE('Value: ' || v);
 END;
+
+-- Dropping packge body
+DROP PACKAGE BODY pkg_counter;
+
+-- Dropping package body and specification
+DROP PACKAGE pkg_counter;
