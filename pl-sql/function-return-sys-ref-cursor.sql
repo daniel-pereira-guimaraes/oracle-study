@@ -5,7 +5,9 @@ CREATE OR REPLACE FUNCTION fn_cursor_employees(p_job_id employees.job_id%TYPE)
 AS
     v_cursor SYS_REFCURSOR;
 BEGIN
-    OPEN v_cursor FOR SELECT first_name, last_name FROM employees;
+    OPEN v_cursor FOR 
+        SELECT first_name, last_name FROM employees
+        WHERE job_id = p_job_id;
     RETURN v_cursor;
 END;
 
