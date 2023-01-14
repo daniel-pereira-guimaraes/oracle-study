@@ -24,7 +24,7 @@ CONNECT BY
 /* Install deptree on Oracle Database XE 19 on Linux VM */
 
 -- Check utldtree.sql path:
-find / -name utldtree.sql
+find / -name utldtree.sql 2> /dev/null
 
 -- Execute on sqlplus:
 @/u01/app/oracle/product/version/db_1/rdbms/admin/utldtree.sql
@@ -34,4 +34,4 @@ find / -name utldtree.sql
 
 EXEC deptree_fill('TABLE', 'HR', 'EMPLOYEES');
 SELECT * FROM deptree ORDER BY seq#;
-SELECT * FROM ideptree;
+SELECT * FROM ideptree;ul
