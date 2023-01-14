@@ -1,5 +1,5 @@
 -- biuds = before, insert, update, delete, statement
-CREATE OR REPLACE TRIGGER tg_bu_employees_salary_inc
+CREATE OR REPLACE TRIGGER tg_biuds_employees_salary_inc
     BEFORE INSERT OR UPDATE OR DELETE ON employees
 BEGIN
     IF TO_NUMBER(TO_CHAR(SYSDATE, 'HH24')) NOT BETWEEN 8 AND 18 OR
