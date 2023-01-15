@@ -1,29 +1,25 @@
-CREATE OR REPLACE PACKAGE pkg_smart_search 
+CREATE OR REPLACE TYPE smart_search_row IS OBJECT (
+        employee_id NUMBER(6),
+        first_name VARCHAR2(20),
+        last_name VARCHAR2(25),
+        email VARCHAR2(25),
+        phone VARCHAR2(20)
+);
+
+CREATE OR REPLACE TYPE smart_search_table IS TABLE OF smart_search_row;
+
+CREATE OR REPLACE PACKAGE smart_search_package
+AS
+    FUNCTION fn_search(
+        p_fields VARCHAR2 DEFAULT NULL, 
+        P_text VARCHAR2 DEFAULT NULL) 
+        RETURN smart_search_table;
+END;
+
+CREATE OR REPLACE PACKAGE BODY smart_search_package
 AS
     TYPE string_table IS TABLE OF VARCHAR(100);
 
-    TYPE result_record IS RECORD (
-        employee_id employees.employee_id%TYPE,
-        first_name employees.first_name%TYPE,
-        last_name employees.last_name%TYPE,
-        email employees.email%TYPE,
-        phone employees.phone_number%TYPE);
-
-    TYPE result_table IS TABLE OF result_record;
-
-    FUNCTION fn_split(
-        p_text VARCHAR2, 
-        p_sep CHAR) 
-        RETURN string_table;
- 
-    FUNCTION fn_smart_search(
-        p_fields VARCHAR2 DEFAULT NULL, 
-        P_text VARCHAR2 DEFAULT NULL) 
-        RETURN result_table;
-END;
-
-CREATE OR REPLACE PACKAGE BODY pkg_smart_search 
-AS
     FUNCTION fn_split(p_text VARCHAR2, p_sep CHAR) RETURN string_table 
     AS
         len INTEGER;
@@ -58,10 +54,10 @@ AS
         RETURN ret;
     END;
     
-    FUNCTION fn_smart_search(
+    FUNCTION fn_search(
         p_fields VARCHAR2 DEFAULT NULL, 
         P_text VARCHAR2 DEFAULT NULL) 
-        RETURN result_table
+        RETURN smart_search_table
     AS
         v_sql VARCHAR(1000) := '';
         v_fields string_table;
@@ -69,8 +65,7 @@ AS
         v_field VARCHAR(30);
         v_value VARCHAR(100);
         v_has_filter BOOLEAN := FALSE;
-        v_result_record result_record;
-        v_result_table result_table;
+        v_result smart_search_table;
     BEGIN
         v_fields := fn_split(p_fields, ',');
         v_values := fn_split(p_text, ' ');
@@ -90,19 +85,24 @@ AS
         IF v_has_filter THEN
             v_sql := ' WHERE ' || v_sql;
         END IF;
-        v_sql := 'SELECT employee_id, first_name, last_name, email, phone_number FROM employees' || v_sql;
-        EXECUTE IMMEDIATE v_sql BULK COLLECT INTO v_result_table;
-        RETURN v_result_table;
+        v_sql := 'SELECT smart_search_row(employee_id, first_name, last_name, email, phone_number) FROM employees' || v_sql;
+        EXECUTE IMMEDIATE v_sql BULK COLLECT INTO v_result;
+        RETURN v_result;
     END;
 
 END;
 
 DECLARE
-    v pkg_smart_search.result_table;
+    v smart_search_table;
 BEGIN
-    v := pkg_smart_search.fn_smart_search('first_name,last_name ', 'guimarães grant smith');
+    v := smart_search_package.fn_search('first_name,last_name ', 'guimarães grant smith');
     DBMS_OUTPUT.PUT_LINE('Printing table...');
     FOR i IN 1..v.COUNT LOOP
         DBMS_OUTPUT.PUT_LINE(v(i).first_name || ' ' || v(i).last_name);
     END LOOP;
 END;
+
+SELECT * FROM TABLE(
+	smart_search_package.fn_search(
+		'first_name,last_name ', 
+		'guimarães grant smith'));
