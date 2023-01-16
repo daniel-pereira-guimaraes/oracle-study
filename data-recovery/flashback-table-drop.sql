@@ -1,3 +1,7 @@
+-- ATENTION! 
+-- a) Flashback not restore foreign keys!
+-- b) Check index names after restore!
+
 CREATE TABLE flashback_drop_test(test_id INTEGER, test_name VARCHAR2(20));
 
 INSERT INTO flashback_drop_test VALUES(1, 'First');
