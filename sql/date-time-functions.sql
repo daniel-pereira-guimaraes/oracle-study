@@ -1,4 +1,4 @@
--- See: https://docs.oracle.com/cd/E17952_01/mysql-5.7-en/date-and-time-functions.html
+-- See: https://www.w3resource.com/oracle/datetime-functions/index.php
 SELECT
     SYSDATE A
     ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') B
