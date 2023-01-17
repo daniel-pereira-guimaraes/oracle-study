@@ -1,3 +1,4 @@
+-- See: https://docs.oracle.com/cd/E17952_01/mysql-5.6-en/string-functions.html
 SELECT 
     UPPER('daniel pereira guimarães')
     ,LOWER('Daniel Pereira Guimarães')
