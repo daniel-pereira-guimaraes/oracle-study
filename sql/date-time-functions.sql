@@ -51,6 +51,15 @@ SELECT
 FROM dual;
 
 SELECT 
+    TO_CHAR(SYSDATE, 'DD - MONTH - YYYY') A,
+    TO_CHAR(SYSDATE, 'DD - month - YYYY') B,
+    TO_CHAR(SYSDATE, 'DD - Month - YYYY') C,
+    TO_CHAR(SYSDATE, 'FMDD - MONTH - YYYY') D,
+    TO_CHAR(SYSDATE, 'FMDD - month - YYYY') E,
+    TO_CHAR(SYSDATE, 'FMDD - Month - YYYY') F
+FROM dual;
+
+SELECT 
     TO_CHAR(SYSDATE, 'HH') A,
     TO_CHAR(SYSDATE, 'HH12') B,
     TO_CHAR(SYSDATE, 'HH24') C,
