@@ -1,5 +1,7 @@
 DESC tableName;
 
+SELECT * FROM user_tables;
+
 SELECT * FROM user_objects 
 WHERE object_type = 'TABLE';
 
