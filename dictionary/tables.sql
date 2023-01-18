@@ -1,6 +1,8 @@
 DESC tableName;
 
 SELECT * FROM user_tables;
+SELECT * FROM all_tables;
+SELECT * FROM dba_tables; -- DBA access required!
 
 SELECT * FROM user_objects 
 WHERE object_type = 'TABLE';
