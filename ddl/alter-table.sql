@@ -7,3 +7,7 @@ ALTER TABLE person MODIFY first_name VARCHAR(25);
 ALTER TABLE person MODIFY id VARCHAR(6);
 
 ALTER TABLE person DROP COLUMN last_name;
+
+ALTER TABLE person ADD insert_date DATE;
+
+ALTER TABLE person MODIFY insert_date DEFAULT SYSDATE;
