@@ -3,3 +3,7 @@ CREATE SYNONYM emp FOR employees;
 SELECT * FROM emp;
 
 DROP SYNONYM emp;
+
+CREATE PUBLIC SYNONYM emp FOR hr.employees;
+
+DROP PUBLIC SYNONYM emp;
