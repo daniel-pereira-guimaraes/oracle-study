@@ -1,0 +1,8 @@
+CREATE TABLE person(
+    id NUMBER(6) NOT NULL CONSTRAINT pk_person PRIMARY KEY, 
+    first_name VARCHAR2(20) NOT NULL
+);
+
+ALTER TABLE person DISABLE CONSTRAINT pk_person;
+
+ALTER TABLE person ENABLE CONSTRAINT pk_person;
