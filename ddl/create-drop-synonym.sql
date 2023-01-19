@@ -1,0 +1,5 @@
+CREATE SYNONYM emp FOR employees;
+
+SELECT * FROM emp;
+
+DROP SYNONYM emp;
