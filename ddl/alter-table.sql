@@ -13,3 +13,7 @@ ALTER TABLE person ADD insert_date DATE;
 ALTER TABLE person MODIFY insert_date DEFAULT SYSDATE;
 
 ALTER TABLE person RENAME COLUMN insert_date TO ins_date;
+
+ALTER TABLE person READ ONLY;
+
+ALTER TABLE person READ WRITE;
