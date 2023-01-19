@@ -8,5 +8,8 @@ DEFAULT TABLESPACE users
 TEMPORARY TABLESPACE temp
 QUOTA UNLIMITED ON users;
 
--- Grant connect
+-- Grant connect:
 GRANT CREATE SESSION TO username;
+
+-- Grant all access to hr.employees table:
+GRANT ALL ON hr.employees TO username;
