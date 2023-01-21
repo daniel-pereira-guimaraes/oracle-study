@@ -15,3 +15,6 @@ ALTER INDEX indexName REBUILD ONLINE;
 
 -- Remove index:
 DROP INDEX indexName;
+
+-- Remove index online (minimize locks):
+DROP INDEX indexName ONLINE;
