@@ -29,17 +29,23 @@ SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item
 START WITH owner_id IS NULL
 CONNECT BY PRIOR item_id = owner_id
 
--- with WHERE:
+-- Restrict levels:
 SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item 
-WHERE level > 2
+WHERE level > 1
 START WITH owner_id IS NULL
 CONNECT BY PRIOR item_id = owner_id
 
--- Remove branch:
+-- Restrict branchs:
 SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item 
 START WITH owner_id IS NULL
 CONNECT BY PRIOR item_id = owner_id 
 	AND item_id <> 5
+
+-- Order by:
+SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item 
+START WITH owner_id IS NULL
+CONNECT BY PRIOR item_id = owner_id
+ORDER SIBLINGS BY item_name
 
 -- DOWN to UP:
 SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item 
