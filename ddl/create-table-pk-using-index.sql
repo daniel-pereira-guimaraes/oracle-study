@@ -7,7 +7,7 @@ CREATE TABLE person(
 
 -- OR --
 
-CREATE TABLE person(
+CREATE UNIQUE TABLE person(
     id NUMBER(6) NOT NULL,
     first_name VARCHAR2(20) NOT NULL
 );
