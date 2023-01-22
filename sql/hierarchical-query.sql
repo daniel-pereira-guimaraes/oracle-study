@@ -35,6 +35,12 @@ WHERE level > 2
 START WITH owner_id IS NULL
 CONNECT BY PRIOR item_id = owner_id
 
+-- Remove branch:
+SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item 
+START WITH owner_id IS NULL
+CONNECT BY PRIOR item_id = owner_id 
+	AND item_id <> 5
+
 -- DOWN to UP:
 SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item 
 START WITH item_id = 9
