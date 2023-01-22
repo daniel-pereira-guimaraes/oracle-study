@@ -29,6 +29,12 @@ SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item
 START WITH owner_id IS NULL
 CONNECT BY PRIOR item_id = owner_id
 
+-- with WHERE:
+SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item 
+WHERE level > 2
+START WITH owner_id IS NULL
+CONNECT BY PRIOR item_id = owner_id
+
 -- DOWN to UP:
 SELECT RPAD(' ', 2 * (level - 1), ' ') || item_name FROM item 
 START WITH item_id = 9
