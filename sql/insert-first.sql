@@ -17,6 +17,30 @@ CREATE TABLE high_salary(
     salary NUMBER(8,2) NOT NULL
 );
 
+/*
+Syntax:
+
+INSERT FIRST
+	WHEN condition1 THEN
+		INTO ... VALUES(...)
+		INTO ... VALUES(...)
+		...
+	WHEN condition2 THEN
+		INTO ... VALUES(...)
+		INTO ... VALUES(...)
+		...
+	...
+	WHEN conditionN THEN
+		INTO ... VALUES(...)
+		INTO ... VALUES(...)
+		...
+	ELSE
+		INTO ... VALUES(...)
+		INTO ... VALUES(...)
+		...
+SELECT ... FROM ...	
+*/
+
 INSERT FIRST
     WHEN salary IS NULL OR salary <= 0 THEN
         INTO no_salary(first_name) VALUES(first_name)
