@@ -1,5 +1,6 @@
 CREATE OR REPLACE TYPE type_search_tips_row IS OBJECT (
     field_name VARCHAR2(30),
+    search_op VARCHAR2(10),
     search_value VARCHAR2(100)
 );
 
@@ -8,7 +9,7 @@ CREATE OR REPLACE TYPE type_search_tips_table
 
 CREATE OR REPLACE PACKAGE pack_search_tips AS
 
-    FUNCTION search_tips(p_sql VARCHAR2, p_text VARCHAR2) 
+    FUNCTION search_tips(p_select VARCHAR2, p_text VARCHAR2) 
         RETURN type_search_tips_table;
 
 END;
@@ -96,63 +97,102 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
         RETURN v_result;
     END;
     
-    FUNCTION search_tips(p_sql VARCHAR2, p_text VARCHAR2) 
+    FUNCTION build_select(p_select VARCHAR2, 
+        p_fields type_string_list, p_values type_string_list)
+        RETURN VARCHAR2
+    AS
+        v_filter VARCHAR2(2000);
+    BEGIN
+        v_filter := build_filter(p_fields, p_values);
+        IF v_filter IS NULL THEN
+            RETURN p_select;
+        END IF;
+        RETURN 'SELECT * FROM (' ||  p_select || ') WHERE ' || v_filter;
+    END;
+    
+    FUNCTION search_tips_table_index(
+        p_table type_search_tips_table, 
+        p_row type_search_tips_row) 
+        RETURN INTEGER 
+    AS
+    BEGIN
+        IF p_table IS NOT NULL AND p_table.LAST IS NOT NULL THEN
+            FOR i IN 1..p_table.LAST LOOP
+                IF (p_table(i).field_name = p_row.field_name AND
+                    p_table(i).search_value = p_row.search_value)
+                THEN
+                    RETURN i;
+                END IF;
+            END LOOP;
+        END IF;
+        RETURN NULL;
+    END;
+    
+    FUNCTION search_tips(p_select VARCHAR2, p_text VARCHAR2) 
         RETURN type_search_tips_table
     AS
         v_fields type_string_list;
         v_values type_string_list;
-        v_filter VARCHAR2(2000);
         v_select VARCHAR2(4000);
         v_cursor NUMBER;
         v_exec_ret INTEGER;
         v_field_value VARCHAR2(2000);
-        v_col_count INTEGER;
-        v_result type_search_tips_table := type_search_tips_table();
+        v_result_max INTEGER;
+        v_result_row type_search_tips_row;
+        v_result_table type_search_tips_table := type_search_tips_table();
     BEGIN
-        v_fields := get_field_names(p_sql);
+        v_fields := get_field_names(p_select);
         v_values := text_split(p_text, ' ');
-        v_filter := build_filter(v_fields, v_values);
-        v_select := p_sql;
-        IF v_filter IS NOT NULL THEN
-            v_select := v_select || ' WHERE ' || v_filter;
-        END IF;
+        v_result_max := v_fields.COUNT * v_values.COUNT;
+        v_select := build_select(p_select, v_fields, v_values);
         
         v_cursor := DBMS_SQL.OPEN_CURSOR;
         DBMS_SQL.PARSE(v_cursor, v_select, DBMS_SQL.NATIVE);
         v_exec_ret := DBMS_SQL.EXECUTE(v_cursor);
-        
-        FOR i IN 1..v_fields.LAST LOOP
+
+        FOR i IN v_fields.FIRST..v_fields.LAST LOOP
             DBMS_SQL.DEFINE_COLUMN(v_cursor, i, v_field_value, 2000);
         END LOOP;
         
         LOOP
             EXIT WHEN DBMS_SQL.FETCH_ROWS(v_cursor) = 0;
-            FOR i in 1..v_fields.LAST LOOP
+            FOR i IN v_fields.FIRST..v_fields.LAST LOOP
                 DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_field_value);
-                FOR j IN 1..v_values.LAST LOOP
-                    IF INSTR(v_field_value, v_values(j)) > 0 THEN
-                        v_result.EXTEND;
-                        v_result(v_result.LAST) := 
-                            type_search_tips_row(v_fields(i), v_values(j));
-                    END IF;
-                END LOOP;
+                IF NULLIF(v_field_value, '') IS NOT NULL THEN
+                    FOR j IN v_values.FIRST..v_values.LAST LOOP
+                        IF INSTR(v_field_value, v_values(j)) > 0 THEN
+                            v_result_row := type_search_tips_row(v_fields(i), v_values(j));
+                            IF search_tips_table_index(v_result_table, v_result_row) IS NULL THEN
+                                v_result_table.EXTEND;
+                                v_result_table(v_result_table.LAST) := v_result_row;
+                                IF v_result_table.COUNT = v_result_max THEN
+                                    RETURN v_result_table;
+                                END IF;
+                            END IF;
+                        END IF;
+                    END LOOP;
+                END IF;
             END LOOP;
         END LOOP;
         DBMS_SQL.CLOSE_CURSOR(v_cursor);
-        RETURN v_result;
+        RETURN v_result_table;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_SQL.CLOSE_CURSOR(v_cursor);
+            RAISE;
     END;
 END;
 
 SET SERVEROUTPUT ON;
 DECLARE
-    v_sql VARCHAR2(30) := 'SELECT * FROM employees';
+    v_select VARCHAR2(30) := 'SELECT * FROM employees';
     v_text VARCHAR2(50) := 'Douglas Grant 9833';
 BEGIN
-    FOR r IN (SELECT * FROM pack_search_tips.search_tips(v_sql, v_text)) LOOP
+    FOR r IN (SELECT * FROM pack_search_tips.search_tips(v_select, v_text)) LOOP
         DBMS_OUTPUT.PUT_LINE(r.field_name || ': ' || r.search_value);
     END LOOP;
 END;
 
 SELECT * FROM pack_search_tips.search_tips(
     'SELECT * FROM employees',
-    'Douglas Grant 9833');
+    'David Peter 44');   
