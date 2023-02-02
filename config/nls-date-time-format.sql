@@ -1,3 +1,6 @@
+SELECT parameter, value FROM nls_database_parameters
+WHERE parameter LIKE 'NLS_%_FORMAT';
+
 SELECT 
 	SYSDATE,
     LOCALTIMESTAMP,
