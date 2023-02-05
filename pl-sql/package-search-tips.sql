@@ -1,7 +1,10 @@
 DROP TYPE type_search_tips_table;
+DROP TYPE type_search_tips_row;
+DROP PACKAGE pack_search_tips;
 
 CREATE OR REPLACE TYPE type_search_tips_row IS OBJECT (
     field_name VARCHAR2(128),
+    data_type VARCHAR2(10),
     search_op VARCHAR2(10),
     search_value VARCHAR2(100)
 );
@@ -16,9 +19,15 @@ CREATE OR REPLACE PACKAGE pack_search_tips AS
 
 END;
 
-
 CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
 
+    TYPE type_field_desc IS RECORD(
+        field_name VARCHAR2(128),
+        data_type VARCHAR2(10)
+    );
+    
+    TYPE type_field_list IS TABLE OF type_field_desc;
+    
     TYPE type_string_list IS TABLE OF VARCHAR2(100);
     
     FUNCTION text_split(p_text VARCHAR2, p_separator CHAR) 
@@ -54,21 +63,38 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
         RETURN v_result;
     END;
     
-    FUNCTION get_field_names(p_select VARCHAR2) RETURN type_string_list
+    FUNCTION get_fields(p_select VARCHAR2) RETURN type_field_list
     AS
-        v_result type_string_list := type_string_list();
+        v_result type_field_list := type_field_list();
         v_select VARCHAR2(32767);
         v_cursor PLS_INTEGER;
         v_desc_tab DBMS_SQL.DESC_TAB;
         v_col_count INTEGER;
+        v_col_type VARCHAR2(10);
     BEGIN
         v_select := 'SELECT * FROM (' || p_select || ') WHERE 1=0';
         v_cursor := DBMS_SQL.OPEN_CURSOR;    
         DBMS_SQL.PARSE(v_cursor, v_select, DBMS_SQL.NATIVE);
         DBMS_SQL.DESCRIBE_COLUMNS(v_cursor, v_col_count, v_desc_tab);
         FOR i IN 1..v_desc_tab.COUNT LOOP
+            CASE v_desc_tab(i).col_type
+                WHEN 1 THEN v_col_type := 'VARCHAR';
+                WHEN 2 THEN v_col_type := 'NUMBER';
+                WHEN 8 THEN v_col_type := 'LONG';
+                WHEN 11 THEN v_col_type := 'ROWID';
+                WHEN 12 THEN v_col_type := 'DATE';
+                WHEN 23 THEN v_col_type := 'RAW';
+                WHEN 96 THEN v_col_type := 'CHAR';
+                WHEN 112 THEN v_col_type := 'CLOB';
+                WHEN 113 THEN v_col_type := 'BLOB';
+                WHEN 114 THEN v_col_type := 'BFILE';
+                WHEN 180 THEN v_col_type := 'TIMESTAMP';
+                WHEN 208 THEN v_col_type := 'UROWID';
+            ELSE
+                v_col_type := NULL;
+            END CASE;
             v_result.EXTEND;
-            v_result(v_result.LAST) := v_desc_tab(i).col_name;
+            v_result(v_result.LAST) := type_field_desc(v_desc_tab(i).col_name, v_col_type);
         END LOOP;
         DBMS_SQL.CLOSE_CURSOR(v_cursor);
         RETURN v_result;        
@@ -78,7 +104,7 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
             RAISE;
     END;
     
-    FUNCTION build_select_fields(p_fields type_string_list) 
+    FUNCTION build_select_fields(p_fields type_field_list) 
         RETURN VARCHAR2 
     AS
         v_result VARCHAR2(32767);
@@ -90,13 +116,13 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
             ELSE
                 v_result := v_result || ',';
             END IF;
-            v_field := p_fields(i);
+            v_field := p_fields(i).field_name;
             v_result := v_result || 'UPPER(' || v_field || ') ' || v_field;
         END LOOP;
         RETURN v_result;
     END;
     
-    FUNCTION build_filter(p_fields type_string_list, p_values type_string_list)
+    FUNCTION build_filter(p_fields type_field_list, p_values type_string_list)
         RETURN VARCHAR2
     AS
         v_result VARCHAR2(32767);
@@ -110,7 +136,7 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
                 ELSE
                     v_result := v_result || ' OR ';
                 END IF;
-                v_field := p_fields(i);
+                v_field := p_fields(i).field_name;
                 v_value := '%' || REPLACE(p_values(j), '''', '''''') || '%';
                 v_result := v_result || v_field || ' LIKE ''' || v_value || '''';
             END LOOP;
@@ -119,7 +145,7 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
     END;
     
     FUNCTION build_select(p_select VARCHAR2, 
-        p_fields type_string_list, p_values type_string_list)
+        p_fields type_field_list, p_values type_string_list)
         RETURN VARCHAR2
     AS
         v_fields VARCHAR2(32767);
@@ -168,13 +194,14 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
 
     PROCEDURE search_tips_table_add(
         p_table IN OUT type_search_tips_table,
-        p_field VARCHAR2, 
+        p_field VARCHAR2,
+        p_type VARCHAR2,
         p_operator VARCHAR2,
         p_value VARCHAR2)
     AS
         v_row type_search_tips_row;
     BEGIN
-        v_row := type_search_tips_row(p_field, p_operator, p_value);
+        v_row := type_search_tips_row(p_field, p_type, p_operator, p_value);
         IF search_tips_table_index(p_table, v_row) IS NULL THEN
             p_table.EXTEND;
             p_table(p_table.LAST) := v_row;
@@ -184,31 +211,33 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
     PROCEDURE search_tips_add_if(
         p_table IN OUT type_search_tips_table,
         p_field VARCHAR2,
+        p_type VARCHAR2,
         p_field_value VARCHAR2,
         p_input_value VARCHAR2,
         p_comp_value VARCHAR2)
     AS
     BEGIN
         IF p_field_value = p_comp_value THEN
-            search_tips_table_add(p_table, p_field, 'EQUAL', p_input_value);
+            search_tips_table_add(p_table, p_field, p_type, 'EQUAL', p_input_value);
         ELSIF p_field_value LIKE p_comp_value || '%' THEN
-            search_tips_table_add(p_table, p_field, 'STARTING', p_input_value);
+            search_tips_table_add(p_table, p_field, p_type, 'STARTING', p_input_value);
         ELSIF p_field_value LIKE '%' || p_comp_value THEN
-            search_tips_table_add(p_table, p_field, 'ENDING', p_input_value);
+            search_tips_table_add(p_table, p_field, p_type, 'ENDING', p_input_value);
         ELSIF p_field_value LIKE '%' || p_comp_value || '%' THEN
-            search_tips_table_add(p_table, p_field, 'CONTAINING', p_input_value);
+            search_tips_table_add(p_table, p_field, p_type, 'CONTAINING', p_input_value);
         END IF;
     END;
     
     FUNCTION search_tips(p_select VARCHAR2, p_text VARCHAR2) 
         RETURN type_search_tips_table
     AS
-        v_fields type_string_list;
+        v_fields type_field_list;
         v_input_values type_string_list;
         v_comp_values type_string_list;
-        v_field VARCHAR(128);
-        v_input_value VARCHAR(100);
-        v_comp_value VARCHAR(100);
+        v_field VARCHAR2(128);
+        v_type VARCHAR2(10);
+        v_input_value VARCHAR2(100);
+        v_comp_value VARCHAR2(100);
         v_select VARCHAR2(32767);
         v_cursor NUMBER;
         v_exec_ret INTEGER;
@@ -216,7 +245,7 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
         v_result_max INTEGER;
         v_result type_search_tips_table := type_search_tips_table();
     BEGIN
-        v_fields := get_field_names(p_select);
+        v_fields := get_fields(p_select);
         v_input_values := text_split(p_text, ' ');
         v_comp_values := prepare_comp_values(v_input_values);
         v_result_max := v_fields.COUNT * v_input_values.COUNT * 4; -- 4 operations!
@@ -236,10 +265,11 @@ CREATE OR REPLACE PACKAGE BODY pack_search_tips AS
                 DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_field_value);
                 IF NULLIF(v_field_value, '') IS NOT NULL THEN
                     FOR j IN v_comp_values.FIRST..v_comp_values.LAST LOOP
-                        v_field := v_fields(i);
+                        v_field := v_fields(i).field_name;
+                        v_type := v_fields(i).data_type;
                         v_input_value := v_input_values(j);
                         v_comp_value := v_comp_values(j);
-                        search_tips_add_if(v_result, v_field, 
+                        search_tips_add_if(v_result, v_field, v_type,
                             v_field_value, v_input_value, v_comp_value);
                         IF v_result.COUNT = v_result_max THEN
                            RETURN v_result;
@@ -279,6 +309,4 @@ END;
 
 SELECT * FROM pack_search_tips.search_tips(
     'SELECT * FROM employees',
-    'David Peter 44');   
-    
-    
+    'David Peter 44');
